@@ -8,6 +8,8 @@ TradingAgents-main/
 *.toml
 *.zip
 *.env
+csv/*.csv
+!csv/*v1.0.0*.csv  
 ignore/
 images/*.svs
 # Ignore compiled files
