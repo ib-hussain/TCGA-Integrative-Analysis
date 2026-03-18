@@ -1,5 +1,7 @@
-
-# TCGA Integrative Analysis: Head and Neck Cancer (HNC)
+<h1 align="center">TCGA Integrative Analysis</h1>
+<p align="center">
+  <img src="images\histopathology.png" alt="Whole Slide Histopathology Image" >
+</p>
 
 This repository contains an end-to-end pipeline for classifying Head and Neck Cancer (HNC) stages and predicting clinical risk factors using multi-omics data and histopathology images. The project combines high-dimensional biomedical data with rigorous feature engineering to address real-world clinical challenges in cancer detection and medical data modelling.
 
@@ -12,8 +14,8 @@ This repository contains an end-to-end pipeline for classifying Head and Neck Ca
 	- Clinical and exposure data
 - **Pipeline:** Preprocessing, feature extraction, integration, model training, and validation
 - **Scale:**
-	- >20 GB histopathology images (172 slides, 82 patients with full data)
-	- >~75 MB textual/omics data (82 patients)
+	- \>20 GB histopathology images (172 slides, 82 patients with full data)
+	- ~75 MB textual/omics data (82 patients)
 
 ## Repository Structure
 
