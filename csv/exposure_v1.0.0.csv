@@ -1,0 +1,115 @@
+project.project_id,cases.case_id,cases.submitter_id,exposures.alcohol_days_per_week,exposures.alcohol_drinks_per_day,exposures.alcohol_history,exposures.exposure_type,exposures.pack_years_smoked,exposures.tobacco_smoking_onset_year,exposures.tobacco_smoking_quit_year,exposures.tobacco_smoking_status
+TCGA-HNSC,03aca47b-7653-4938-9178-ed7c37eee6d5,TCGA-CR-7392,-,-,-,Tobacco,30.0,1959,1979,Current Reformed Smoker for > 15 yrs
+TCGA-HNSC,0f718e17-86c1-4221-a878-d57ae87e744f,TCGA-HD-7831,1.0,0.0,Yes,-,-,-,-,-
+TCGA-HNSC,0f718e17-86c1-4221-a878-d57ae87e744f,TCGA-HD-7831,-,-,-,Tobacco,-,-,-,Lifelong Non-Smoker
+TCGA-HNSC,10b3f56a-e61e-486b-8d3c-176668d5dc34,TCGA-DQ-5631,0.0,1.0,Yes,-,-,-,-,-
+TCGA-HNSC,10b3f56a-e61e-486b-8d3c-176668d5dc34,TCGA-DQ-5631,-,-,-,Tobacco,23.0,1972,1995,Current Reformed Smoker for < or = 15 yrs
+TCGA-HNSC,13f63218-0949-41e6-a661-c844414c45b5,TCGA-CN-5364,-,-,-,Tobacco,-,-,-,Current Smoker
+TCGA-HNSC,1465b7ec-8d2b-47dd-8387-977eed44cc86,TCGA-CV-5971,-,-,-,Tobacco,-,-,-,Current Smoker
+TCGA-HNSC,15714e69-e075-4688-8f51-c7102fe4ca07,TCGA-CV-6945,-,-,-,Tobacco,75.0,1969,-,Current Smoker
+TCGA-HNSC,16779eed-f386-4e8f-8475-04d33b9dd160,TCGA-CR-7383,-,-,-,Tobacco,110.0,1954,-,Current Smoker
+TCGA-HNSC,1c25aad5-13f5-44dc-a18f-425d7626ce55,TCGA-CQ-5334,-,-,-,Tobacco,-,-,-,Current Reformed Smoker for > 15 yrs
+TCGA-HNSC,1c95de68-18d9-429b-b379-878838f88a72,TCGA-CR-7367,-,-,-,Tobacco,45.0,1963,-,Current Smoker
+TCGA-HNSC,1c95de68-18d9-429b-b379-878838f88a72,TCGA-CR-7367,7.0,6.0,Yes,-,-,-,-,-
+TCGA-HNSC,1dd23cd6-3aa8-4553-8813-04701451846e,TCGA-CV-7103,-,-,-,Tobacco,-,-,-,Current Smoker
+TCGA-HNSC,1dd23cd6-3aa8-4553-8813-04701451846e,TCGA-CV-7103,7.0,3.0,Yes,-,-,-,-,-
+TCGA-HNSC,1e05fdbd-c80b-41c6-9b40-8a7200c92e76,TCGA-CV-5979,-,-,-,Tobacco,-,-,-,Lifelong Non-Smoker
+TCGA-HNSC,1f744ada-6de1-446d-b62c-76a7fc8b40af,TCGA-CN-4737,-,-,-,Tobacco,-,-,-,Lifelong Non-Smoker
+TCGA-HNSC,20ece2ca-8601-4cca-aec5-0a5c0b92594d,TCGA-CQ-7065,-,-,-,Tobacco,-,-,-,Lifelong Non-Smoker
+TCGA-HNSC,242bdece-75dc-45b9-a9b3-3e1bc305a3e3,TCGA-CR-7373,-,-,-,Tobacco,90.0,1954,1984,Current Reformed Smoker for > 15 yrs
+TCGA-HNSC,277b02e9-ded5-4980-845d-af53690000ac,TCGA-CN-4741,-,-,-,Tobacco,45.0,1978,2003,Current Reformed Smoker for < or = 15 yrs
+TCGA-HNSC,27c28c89-f4e7-4aec-a806-c0da7756e47f,TCGA-CR-7368,-,-,-,Tobacco,57.0,1968,2006,Current Reformed Smoker for < or = 15 yrs
+TCGA-HNSC,2fbafcc5-896c-4e50-8956-a61540fc89be,TCGA-CV-7235,-,-,-,Tobacco,97.5,1952,1991,Current Reformed Smoker for > 15 yrs
+TCGA-HNSC,2fbafcc5-896c-4e50-8956-a61540fc89be,TCGA-CV-7235,7.0,4.0,Yes,-,-,-,-,-
+TCGA-HNSC,2fc960bd-01b0-422d-ad33-34520fa3df0e,TCGA-CN-4729,-,-,-,Tobacco,35.0,-,1997,Current Reformed Smoker for < or = 15 yrs
+TCGA-HNSC,2fc960bd-01b0-422d-ad33-34520fa3df0e,TCGA-CN-4729,7.0,3.0,Yes,-,-,-,-,-
+TCGA-HNSC,38cfe5af-02e4-4271-8978-8e2566d3dca7,TCGA-CV-7236,-,-,-,Tobacco,-,-,-,Not Reported
+TCGA-HNSC,396ccdcb-40eb-4299-8575-b26753054434,TCGA-CN-6995,-,-,-,Tobacco,-,-,-,Current Smoker
+TCGA-HNSC,3c975b68-4a6e-4c97-a8d1-b9a427d4957c,TCGA-CV-5442,-,-,-,Tobacco,-,-,1995,Current Reformed Smoker for < or = 15 yrs
+TCGA-HNSC,3e5f451a-5882-4914-ae1a-95c898c2bcca,TCGA-BA-6872,7.0,6.0,Yes,-,-,-,-,-
+TCGA-HNSC,3e5f451a-5882-4914-ae1a-95c898c2bcca,TCGA-BA-6872,-,-,-,Tobacco,40.0,1974,-,Current Smoker
+TCGA-HNSC,444e5bfc-d4e5-4b0d-b96d-88ecea8873e9,TCGA-CN-4742,-,-,-,Tobacco,20.0,1988,-,Current Smoker
+TCGA-HNSC,444e5bfc-d4e5-4b0d-b96d-88ecea8873e9,TCGA-CN-4742,-,6.0,Yes,-,-,-,-,-
+TCGA-HNSC,45c3cd39-1c5d-4e26-8afc-5bed3c230088,TCGA-CR-7372,-,-,-,Tobacco,-,-,-,Lifelong Non-Smoker
+TCGA-HNSC,467d5c94-1e67-4454-9e9c-9dffaa643032,TCGA-CR-6478,1.0,-,Yes,-,-,-,-,-
+TCGA-HNSC,467d5c94-1e67-4454-9e9c-9dffaa643032,TCGA-CR-6478,-,-,-,Tobacco,-,1969,2004,Current Reformed Smoker for < or = 15 yrs
+TCGA-HNSC,47d1fcaf-3c01-43ba-9a21-0870b4ea2976,TCGA-CX-7082,-,-,-,Tobacco,50.0,-,2003,Current Reformed Smoker for < or = 15 yrs
+TCGA-HNSC,47d1fcaf-3c01-43ba-9a21-0870b4ea2976,TCGA-CX-7082,0.0,0.0,No,-,-,-,-,-
+TCGA-HNSC,4bfbce2b-9d0b-4e8a-950f-fd8e0ba3e05a,TCGA-BA-4077,-,-,-,Tobacco,30.0,1983,2005,Current Reformed Smoker for < or = 15 yrs
+TCGA-HNSC,4bfbce2b-9d0b-4e8a-950f-fd8e0ba3e05a,TCGA-BA-4077,0.0,0.0,No,-,-,-,-,-
+TCGA-HNSC,4f5bc340-bdb5-418a-b3c4-96ac85e08b34,TCGA-CV-6934,-,-,-,Tobacco,75.0,1948,-,Current Smoker
+TCGA-HNSC,534f85f2-b9eb-45be-87d5-c3dffd13d541,TCGA-CV-7255,-,-,-,Tobacco,-,-,-,Lifelong Non-Smoker
+TCGA-HNSC,53d9a130-4a3a-4491-85cd-9a44415a1632,TCGA-DQ-5625,7.0,15.0,Yes,-,-,-,-,-
+TCGA-HNSC,53d9a130-4a3a-4491-85cd-9a44415a1632,TCGA-DQ-5625,-,-,-,Tobacco,33.0,1975,-,Current Smoker
+TCGA-HNSC,55838e1f-07e8-49ca-89d6-46216babc6f7,TCGA-CN-6018,-,-,-,Tobacco,-,-,-,Lifelong Non-Smoker
+TCGA-HNSC,57212fda-fd32-4328-81dc-61f167970f89,TCGA-CV-7099,-,-,-,Tobacco,-,1936,1956,Current Reformed Smoker for > 15 yrs
+TCGA-HNSC,58574e35-8a30-4207-b127-59fff7c87a43,TCGA-BB-4224,-,-,-,Tobacco,-,-,-,Lifelong Non-Smoker
+TCGA-HNSC,58574e35-8a30-4207-b127-59fff7c87a43,TCGA-BB-4224,1.0,1.0,Yes,-,-,-,-,-
+TCGA-HNSC,59398d50-45cf-4812-a24e-0c00c0199971,TCGA-CV-6441,-,-,-,Tobacco,38.0,1970,2008,Current Reformed Smoker for < or = 15 yrs
+TCGA-HNSC,59398d50-45cf-4812-a24e-0c00c0199971,TCGA-CV-6441,7.0,-,Yes,-,-,-,-,-
+TCGA-HNSC,5a976335-2326-46f0-abf1-29b744da1f43,TCGA-CV-7102,-,-,-,Tobacco,-,1945,1992,Current Reformed Smoker for < or = 15 yrs
+TCGA-HNSC,5a976335-2326-46f0-abf1-29b744da1f43,TCGA-CV-7102,7.0,1.0,Yes,-,-,-,-,-
+TCGA-HNSC,5da2dbde-735b-4f05-b6d7-76de54d6d6ac,TCGA-CN-4726,-,-,-,Tobacco,12.5,-,-,Current Smoker
+TCGA-HNSC,600fc87b-a177-4bf9-9084-457f7e7e102c,TCGA-CV-7411,-,-,-,Tobacco,-,-,-,Current Smoker
+TCGA-HNSC,63b50e1c-7948-464f-bff1-8e0e5daafcc5,TCGA-CV-7434,-,-,-,Tobacco,80.0,1958,1998,Current Reformed Smoker for < or = 15 yrs
+TCGA-HNSC,63b50e1c-7948-464f-bff1-8e0e5daafcc5,TCGA-CV-7434,7.0,1.0,Yes,-,-,-,-,-
+TCGA-HNSC,657346f2-4280-4d80-983e-cab8004f184a,TCGA-CQ-5332,-,-,-,Tobacco,90.0,-,1998,Current Reformed Smoker for < or = 15 yrs
+TCGA-HNSC,70741b73-9683-42bd-87fc-6a021a70103b,TCGA-BA-5556,7.0,2.0,Yes,-,-,-,-,-
+TCGA-HNSC,70741b73-9683-42bd-87fc-6a021a70103b,TCGA-BA-5556,-,-,-,Tobacco,60.0,1968,2010,Current Reformed Smoker for < or = 15 yrs
+TCGA-HNSC,78fcc813-d0a8-44aa-b004-62810dca9d12,TCGA-CV-7238,-,-,-,Tobacco,-,-,-,Lifelong Non-Smoker
+TCGA-HNSC,7e0575ce-670b-4035-8a90-4d35279707b2,TCGA-BA-5557,-,-,-,Tobacco,-,-,-,Lifelong Non-Smoker
+TCGA-HNSC,7e0575ce-670b-4035-8a90-4d35279707b2,TCGA-BA-5557,0.0,0.0,No,-,-,-,-,-
+TCGA-HNSC,832316ee-08ab-412b-9e4d-8a57ff84bc11,TCGA-CR-7391,-,-,-,Tobacco,-,1990,1993,Current Reformed Smoker for > 15 yrs
+TCGA-HNSC,8a3fdb52-63ef-48d7-95ff-167829825eb9,TCGA-DQ-7588,-,-,-,Tobacco,45.0,1965,2010,Current Reformed Smoker for < or = 15 yrs
+TCGA-HNSC,8a3fdb52-63ef-48d7-95ff-167829825eb9,TCGA-DQ-7588,4.0,10.0,Yes,-,-,-,-,-
+TCGA-HNSC,8c238d30-df8e-4e6b-98fc-21696269a294,TCGA-CV-6956,-,-,-,Tobacco,-,-,-,Current Smoker
+TCGA-HNSC,8ebe8c25-5ef9-42d4-9414-8313227b673f,TCGA-CQ-7068,-,-,-,Tobacco,-,-,-,Lifelong Non-Smoker
+TCGA-HNSC,8fc1f1be-d2d5-4b3a-9973-f4d964018beb,TCGA-CV-5973,-,-,-,Tobacco,-,-,-,Lifelong Non-Smoker
+TCGA-HNSC,90a8d2cb-1f31-45f9-8575-eed3cb9a7798,TCGA-CV-7100,-,-,-,Tobacco,-,1959,1979,Current Reformed Smoker for > 15 yrs
+TCGA-HNSC,93b742eb-5fc3-4ce2-b7f6-c89f97e0dcc9,TCGA-CV-7263,-,-,-,Tobacco,60.0,-,-,Current Reformed Smoker for > 15 yrs
+TCGA-HNSC,96415324-6859-41eb-8d07-be4e6f7d9781,TCGA-CV-7416,-,-,-,Tobacco,-,-,-,Lifelong Non-Smoker
+TCGA-HNSC,9a76bd98-1d2b-4d0f-9772-883520ff6210,TCGA-CR-6481,-,-,-,Tobacco,-,-,-,Lifelong Non-Smoker
+TCGA-HNSC,9ae5101b-6031-4ab1-bfca-198c41af3184,TCGA-CR-6487,-,-,-,Tobacco,11.0,1984,2006,Current Reformed Smoker for < or = 15 yrs
+TCGA-HNSC,9d0f5938-6a01-4c06-8536-dff834f7f2f9,TCGA-CV-7097,7.0,3.0,Yes,-,-,-,-,-
+TCGA-HNSC,9d0f5938-6a01-4c06-8536-dff834f7f2f9,TCGA-CV-7097,-,-,-,Tobacco,64.0,1970,2002,Current Reformed Smoker for < or = 15 yrs
+TCGA-HNSC,9f89510c-ed07-471f-b35e-7c87c237b9fe,TCGA-CR-7385,-,2.0,Yes,-,-,-,-,-
+TCGA-HNSC,9f89510c-ed07-471f-b35e-7c87c237b9fe,TCGA-CR-7385,-,-,-,Tobacco,0.01685,1987,1989,Current Reformed Smoker for > 15 yrs
+TCGA-HNSC,9ffa79fa-d2d8-48e1-8fd6-4b020ecf357c,TCGA-CQ-5330,-,-,-,Tobacco,21.0,1968,1989,Current Reformed Smoker for > 15 yrs
+TCGA-HNSC,a63ca97d-ef31-4118-9547-a6730967290f,TCGA-BA-4074,-,-,-,Tobacco,51.0,1951,-,Current Smoker
+TCGA-HNSC,ad6c9d09-2c03-4786-a72d-dd2aa5f603d4,TCGA-CX-7086,-,-,-,Tobacco,35.0,1976,-,Current Smoker
+TCGA-HNSC,ad6c9d09-2c03-4786-a72d-dd2aa5f603d4,TCGA-CX-7086,7.0,7.0,Yes,-,-,-,-,-
+TCGA-HNSC,b3342767-62bc-407f-8a83-5be50e3bdc3e,TCGA-CV-7413,-,-,-,Tobacco,-,-,-,Not Reported
+TCGA-HNSC,b3631718-9e0a-454c-bee1-8f36ebc509d8,TCGA-BA-5153,0.0,0.0,No,-,-,-,-,-
+TCGA-HNSC,b3631718-9e0a-454c-bee1-8f36ebc509d8,TCGA-BA-5153,-,-,-,Tobacco,-,-,-,Lifelong Non-Smoker
+TCGA-HNSC,b3bed685-e9db-436b-9938-2b8a0a0d5b83,TCGA-CR-7376,-,-,-,Tobacco,54.0,1943,1961,Current Reformed Smoker for > 15 yrs
+TCGA-HNSC,b43b8aed-d166-4f00-8144-24ad3fe314ed,TCGA-CR-6493,-,-,-,Tobacco,15.0,1956,1987,Current Reformed Smoker for > 15 yrs
+TCGA-HNSC,b4a41682-4aca-4f1d-bacd-66f5e6ec7466,TCGA-DQ-5624,-,-,-,Tobacco,-,-,-,Lifelong Non-Smoker
+TCGA-HNSC,b74519ff-b338-45e9-9307-008223726dac,TCGA-CR-6477,-,-,-,Tobacco,-,1971,1988,Current Reformed Smoker for > 15 yrs
+TCGA-HNSC,bf6b931e-cb2e-4cc0-b603-e9fc71fdc509,TCGA-BA-6873,0.0,0.0,No,-,-,-,-,-
+TCGA-HNSC,bf6b931e-cb2e-4cc0-b603-e9fc71fdc509,TCGA-BA-6873,-,-,-,Tobacco,1.0,2001,-,Current Smoker
+TCGA-HNSC,bfaa4b3f-3e38-478e-99b3-013f2cda80f5,TCGA-CN-5359,-,-,-,Tobacco,29.0,1980,-,Current Smoker
+TCGA-HNSC,c1f50a22-38df-41cc-a1f4-f7985504a7ac,TCGA-BB-4225,-,-,-,Tobacco,1.5,1948,2001,Current Reformed Smoker for < or = 15 yrs
+TCGA-HNSC,c1f50a22-38df-41cc-a1f4-f7985504a7ac,TCGA-BB-4225,1.0,1.0,Yes,-,-,-,-,-
+TCGA-HNSC,cac30b32-03ef-4ecb-88d8-d5577ab6b2a6,TCGA-BB-4228,-,-,-,Tobacco,102.5,1969,-,Current Smoker
+TCGA-HNSC,d296cdb5-a0f6-40cc-8ce7-73e4ccd176f3,TCGA-CR-7394,-,-,-,Tobacco,60.0,1949,-,Current Smoker
+TCGA-HNSC,d5eedfb5-4fa3-4a1e-ad0d-ea550b22a5ba,TCGA-CV-6433,7.0,4.0,Yes,-,-,-,-,-
+TCGA-HNSC,d5eedfb5-4fa3-4a1e-ad0d-ea550b22a5ba,TCGA-CV-6433,-,-,-,Tobacco,-,1970,-,Current Smoker
+TCGA-HNSC,dbf4e04d-095e-4554-a48c-fe7cb711ac42,TCGA-CQ-5331,-,-,-,Tobacco,15.0,1952,1967,Current Reformed Smoker for > 15 yrs
+TCGA-HNSC,de206681-3e27-4d4f-8669-aefb12b5b1e3,TCGA-CV-7183,-,-,-,Tobacco,-,1979,-,Current Reformed Smoker for > 15 yrs
+TCGA-HNSC,dea53b7f-3e7d-41a3-ae2d-58548fe0b595,TCGA-CR-7379,-,-,-,Tobacco,0.71,-,-,Current Reformed Smoker for > 15 yrs
+TCGA-HNSC,e2e64c5d-44ba-42f0-ab9d-ec16b21d2545,TCGA-CR-7401,-,-,-,Tobacco,66.0,1963,2007,Current Reformed Smoker for < or = 15 yrs
+TCGA-HNSC,e37c83dc-c2c4-4e5f-a57b-39ffcf9aa3cf,TCGA-CN-4740,-,-,-,Tobacco,12.0,-,1999,Current Reformed Smoker for < or = 15 yrs
+TCGA-HNSC,e37c83dc-c2c4-4e5f-a57b-39ffcf9aa3cf,TCGA-CN-4740,-,4.0,Yes,-,-,-,-,-
+TCGA-HNSC,e4733700-ff23-43ff-bfa0-e679ce9352c9,TCGA-D6-6516,-,-,-,Tobacco,74.0,1959,1996,Current Reformed Smoker for < or = 15 yrs
+TCGA-HNSC,eb611a76-eecf-452c-bfbe-ab49b362f49c,TCGA-BA-7269,7.0,2.0,Yes,-,-,-,-,-
+TCGA-HNSC,eb611a76-eecf-452c-bfbe-ab49b362f49c,TCGA-BA-7269,-,-,-,Tobacco,46.0,1964,-,Current Smoker
+TCGA-HNSC,eeae67ac-c9e0-468d-aad6-052501f7b982,TCGA-H7-7774,0.0,0.0,No,-,-,-,-,-
+TCGA-HNSC,eeae67ac-c9e0-468d-aad6-052501f7b982,TCGA-H7-7774,-,-,-,Tobacco,55.0,1956,2011,Current Reformed Smoker for < or = 15 yrs
+TCGA-HNSC,ef3ce0e5-d2e8-4616-8b1a-a78c591cf235,TCGA-CV-6959,7.0,1.0,Yes,-,-,-,-,-
+TCGA-HNSC,ef3ce0e5-d2e8-4616-8b1a-a78c591cf235,TCGA-CV-6959,-,-,-,Tobacco,-,-,-,Lifelong Non-Smoker
+TCGA-HNSC,f458d21d-1854-4baf-9eb1-79c29b663804,TCGA-CR-6488,-,-,-,Tobacco,-,-,-,Lifelong Non-Smoker
+TCGA-HNSC,fbdab01c-191c-4aef-9451-ca3afec55fa1,TCGA-D6-6823,2.0,1.0,Yes,-,-,-,-,-
+TCGA-HNSC,fbdab01c-191c-4aef-9451-ca3afec55fa1,TCGA-D6-6823,-,-,-,Tobacco,60.0,1979,-,Current Smoker
+TCGA-HNSC,fcf0dc48-b889-4593-a15b-aa715aae7bf5,TCGA-CV-6948,-,-,-,Tobacco,-,-,-,Not Reported
+TCGA-HNSC,ffcf851d-7fa1-4b45-911a-a3fbd74c253a,TCGA-CN-6016,-,-,-,Tobacco,50.0,1960,-,Current Smoker
+TCGA-HNSC,ffcf851d-7fa1-4b45-911a-a3fbd74c253a,TCGA-CN-6016,7.0,12.0,Yes,-,-,-,-,-
