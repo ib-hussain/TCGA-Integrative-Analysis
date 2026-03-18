@@ -1,21 +1,44 @@
 <h1 align="center">TCGA Integrative Analysis</h1>
+
 <p align="center">
-  <img src="images\histopathology.png" alt="Whole Slide Histopathology Image" >
+	<img src="images\histopathology.png" alt="Whole Slide Histopathology Image" >
 </p>
 
-This repository contains an end-to-end pipeline for classifying Head and Neck Cancer (HNC) stages and predicting clinical risk factors using multi-omics data and histopathology images. The project combines high-dimensional biomedical data with rigorous feature engineering to address real-world clinical challenges in cancer detection and medical data modelling.
+## Global Cancer Context
+
+Approximately 9.7 million people die from cancer each year worldwide (2022), representing nearly 1 in 6 deaths globally. Among men, Head and Neck Cancer (HNC) ranks as the fifth most common cancer overall, while in women it ranks 12th. 
+
+
+## Project Aim & Overview
+
+Developed an integrative machine learning model to classify Head and Neck Cancer (HNC) stages and predict risk factors using multi-omics data (genomics, epigenomics, transcriptomics) and histopathology images. Built end-to-end in under 24 hours, combining high-dimensional biomedical data with rigorous feature engineering to address real-world clinical challenges.
+
+### Classification & Prediction Goals
+- Classify cancer vs non-cancer
+- Classify stages of cancer
+- Predict risk factors (smoking, alcohol, etc.)
+
+## Omics & Imaging Data Explained
+
+- **Images:** H&E stained images show tissue morphology ([.svs files])
+- **Genome:** Mutation profiles indicate which genes are altered and their frequency ([.maf files])
+- **Transcriptome:** RNA transcript counts reveal gene activity levels in each sample ([.tsv files])
+- **Epigenome:** DNA methylation scores (0 to 1) reflect chemical tagging that can silence genes ([.tsv files])
+
 
 ## Project Overview
 
-- **Goal:** Develop integrative machine learning models for HNC stage classification and risk prediction
-- **Data Types:**
+
+**Goal:** Develop integrative machine learning models for HNC stage classification and risk prediction
+**Data Types:**
 	- Genomics, epigenomics, transcriptomics (textual/omics data)
 	- Whole slide histopathology images (SVS format)
 	- Clinical and exposure data
-- **Pipeline:** Preprocessing, feature extraction, integration, model training, and validation
-- **Scale:**
+**Pipeline:** Preprocessing, feature extraction, integration, model training, and validation
+**Scale:**
 	- \>20 GB histopathology images (172 slides, 82 patients with full data)
 	- ~75 MB textual/omics data (82 patients)
+
 
 ## Repository Structure
 
@@ -45,11 +68,14 @@ This repository contains an end-to-end pipeline for classifying Head and Neck Ca
 
 ## Purpose & Usage
 
-The repository enables:
-- Feature engineering from multi-omics and image data
-- Integration of clinical, omics, and histopathology features
-- Training and validation of classification models for cancer stage and risk prediction
-- End-to-end pipelines for robust biomedical modelling
+
+Processed and analysed (>20GB) histopathology image dataset alongside (>150MB) categorical patient data
+Trained classification models to detect cancer stages and clinical patterns
+Applied preprocessing, feature extraction, and validation pipelines for high-dimensional medical data
+Feature engineering from multi-omics and image data
+Integration of clinical, omics, and histopathology features
+Training and validation of classification models for cancer stage and risk prediction
+End-to-end pipelines for robust biomedical modelling
 
 ## Contributors
 
