@@ -77,6 +77,35 @@ Integration of clinical, omics, and histopathology features
 Training and validation of classification models for cancer stage and risk prediction
 End-to-end pipelines for robust biomedical modelling
 
+## Data Engineering Methodology
+
+The project's robust data pipelines systematically clean, align, and integrate high-dimensional clinical and multi-omics data. Key data operations detailed in the repository's data wrangling notebooks include:
+
+### 1. Data Cleaning & Dimensionality Reduction
+- **Missing Value Handling:** Systematically drop features with exceedingly high missing rates (e.g., >90% or >95% nulls), such as predominantly empty pathology or exposure descriptions. Completely null columns are identified and removed automatically.
+- **Low Variance Filtering:** Drop variables containing singular unique values (non-informative features) while computationally preventing the exclusion of essential clinical keys.
+- **Mutation Curation:** Filter for functional (non-synonymous) mutations (e.g., Missense, Nonsense, Frame Shifts) and calculate the Variant Allele Frequency (VAF) from depth counts to distill actionable genomic variants.
+
+### 2. Clinical & Pathology Data Wrangling
+- **Clinical Integration:** Perform full outer joins to seamlessly unify `clinical`, `exposure`, and `follow_up` datasets per patient without data loss.
+- **Feature Engineering:** Engineer composite demographic and diagnostic indicators, such as combined `disease_index` (disease type and index date) and unified `ethnicity_race` arrays. Standardize case-level identifiers (12-char TCGA barcodes) across disparate clinical sources.
+- **Curated Filtering:** Generate consolidated reports of dropped parameters and yield focused, smaller 'curated' clinical cohort dataframes for streamlined downstream ML integration.
+
+### 3. Multi-Omics Signal Alignment (Transcriptomics & Methylation)
+- **ID Standardization:** Standardize sample-level TCGA identifiers (15-char formats) uniformly across methylation and transcriptomics records.
+- **Epigenetic Equation:** Filter for intersecting sequenced genes and patient samples across both datasets to generate an integrative *combined epigenetic score* modeled as `Combined Score = (1 - Methylation) * Transcriptomics`, representing gene silencing impact on expression.
+
+### 4. Integrative Merging & Matrix Generation
+- **Mutation-Epigenetic Interaction:** Transform raw curated mutations into binary, patient-by-gene mutation inclusion matrices. Multiply this against the corresponding combined epigenetic scores to create a fully quantified interaction matrix, factoring out normal tissue equivalents.
+- **Unified Modeling Matrices:** Produce cohesive final datasets merging the functional clinical/pathology context, filtered gene mutation statuses, and computed epigenetic signals into unified, analysis-ready CSV structures.
+
+### 5. Final Output Datasets
+The culmination of these operations generates four primary analytical CSVs located in the repository's root, structurally optimized for machine learning ingestion:
+- `Pathology_Cohorts_v6.csv`: Consolidates the comprehensively curated clinical background data linked with specific histopathological indicators.
+- `combined_epigenetic_score_matrix.csv`: Quantifies transcriptomic expression continuously weighted and mathematically modulated by localized DNA methylation levels per gene.
+- `mutations_plus_epigenetics.csv`: A comprehensive concatenated structure of patient binary mutation vectors concatenated dynamically with their aligned epigenetic scores.
+- `mutation_epigenetic_interaction_matrix.csv`: The multiplicative interaction matrices extracting the integrated functional interplay specifically isolating active gene mutations against their accompanying epigenetic constraints.
+
 ## Contributors
 
 - Data Engineer: [Ibrahim Hussain](https://github.com/ib-hussain)
