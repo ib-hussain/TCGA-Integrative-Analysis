@@ -10,7 +10,6 @@ TradingAgents-main/
 *.env
 ignore/
 images/*.svs
-BugMagnets/
 # Ignore compiled files
 *.pyc
 *.pyo
