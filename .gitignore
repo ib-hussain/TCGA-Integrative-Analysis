@@ -8,9 +8,11 @@ TradingAgents-main/
 *.toml
 *.zip
 *.env
+ov_cache/
 csv/*.csv
 !csv/*v1.0.0*.csv  
-ignore/
+*ignore*/
+*ignore*.*
 images/*.svs
 # Ignore compiled files
 *.pyc
@@ -238,3 +240,10 @@ __marimo__/
 # Streamlit
 .streamlit/
 .python-version
+resnet50_fp16.xml
+resnet50_fp16.bin
+requirementss.txt
+ignore.py
+.gitignore
+kernel.errors.txt
+bench_resnet50_openvino.py
