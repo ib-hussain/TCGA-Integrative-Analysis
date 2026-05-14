@@ -1,0 +1,16 @@
+openslide-python
+openslide-bin
+numpy
+pandas
+Pillow
+opencv-python
+scikit-image
+scikit-learn
+torchvision
+torch
+tqdm
+json
+dataclasses-json
+catboost
+xgboost
+lightgbm

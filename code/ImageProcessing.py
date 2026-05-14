@@ -13,9 +13,11 @@ import json
 from tqdm import tqdm
 import warnings
 import gc
-import pickle
 from pathlib import Path
 import time
+import traceback
+import subprocess
+import sys
 warnings.filterwarnings('ignore')
 
 # =============================================
@@ -26,30 +28,31 @@ class Config:
     SVS_DIR = "images/"
     VALID_PATIENTS_FILE = "csv/common_82_samples.txt"
     CHECKPOINT_DIR = "checkpoints/"
-    OUTPUT_DIR = "output_features/"
+    OUTPUT_TRADITIONAL = "image_features_traditional.csv"
+    OUTPUT_DL = "image_features_deeplearning.csv"
     
-    # Patch extraction parameters
+    # Patch extraction
     PATCH_SIZE = 256
     PATCHES_PER_SLIDE = 1000
     TISSUE_THRESHOLD = 0.3
+    DETECTION_LEVEL = 5
     
-    # Memory management (CRITICAL!)
-    SAVE_INTERVAL = 1          # Save checkpoints every N slides
-    MAX_PATCHES_IN_MEMORY = 100 # Process patches in chunks to avoid OOM
-    BATCH_SIZE_DL = 16         # Smaller batch for DL (CPU memory)
+    # Memory management
+    MAX_PATCHES_MEMORY = 50   # Process this many patches at a time (lower = less peak RAM)
+    SLIDES_BEFORE_SAVE = 5    # Save progress every N slides
     
-    # Processing levels
-    EXTRACTION_LEVEL = 2       # Extract patches from level 2 (smaller but still detailed)
-    DETECTION_LEVEL = 5        # Tissue detection at very low res
+    # Smoke test (set to True to test on just 2 slides with 50 patches each)
+    SMOKE_TEST = False
+    SMOKE_SLIDES = 2
+    SMOKE_PATCHES = 50
     
-    # Feature type to run
-    RUN_TRADITIONAL = True
-    RUN_DL = True             # Set to True later after traditional works
-    DEVICE = "cpu"
+    # Deep learning
+    BATCH_SIZE = 32
+    DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
     
-    # Output files
-    OUTPUT_TRADITIONAL = "output_features/image_features_traditional.csv"
-    OUTPUT_DL = "output_features/image_features_deeplearning.csv"
+    # Hyperparameters for ResNet
+    DL_MODEL = 'resnet50'  # 'resnet18' (lighter) or 'resnet50' (heavier)
+    DL_IMAGE_SIZE = 224    # Input size for DL model
 
 # =============================================
 # CHECKPOINT MANAGEMENT
@@ -60,62 +63,69 @@ class CheckpointManager:
     def __init__(self, checkpoint_dir, feature_type):
         self.checkpoint_dir = Path(checkpoint_dir) / feature_type
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
-        self.state_file = self.checkpoint_dir / "processing_state.json"
-        self.data_dir = self.checkpoint_dir / "partial_data"
-        self.data_dir.mkdir(exist_ok=True)
+        self.state_file = self.checkpoint_dir / "state.json"
+        self.features_dir = self.checkpoint_dir / "features"
+        self.features_dir.mkdir(exist_ok=True)
         
-        # Load existing state if available
+        # Load or initialize state
         self.state = self.load_state()
     
     def load_state(self):
-        """Load processing state from checkpoint"""
+        """Load processing state"""
         if self.state_file.exists():
             with open(self.state_file, 'r') as f:
                 return json.load(f)
         return {
-            'processed_slides': [],
+            'completed_slides': [],
             'failed_slides': {},
             'total_patches': 0,
-            'last_slide_idx': -1
+            'current_slide_index': -1
         }
     
     def save_state(self):
-        """Save processing state to checkpoint"""
+        """Save processing state"""
         with open(self.state_file, 'w') as f:
             json.dump(self.state, f, indent=2)
     
-    def mark_slide_complete(self, slide_id, num_patches):
-        """Mark a slide as successfully processed"""
-        if slide_id not in self.state['processed_slides']:
-            self.state['processed_slides'].append(slide_id)
+    def is_slide_done(self, slide_id):
+        """Check if slide is already processed"""
+        return slide_id in self.state['completed_slides']
+    
+    def is_slide_failed(self, slide_id):
+        """Check if slide previously failed"""
+        return slide_id in self.state['failed_slides']
+    
+    def mark_slide_done(self, slide_id, num_patches):
+        """Mark slide as completed"""
+        if slide_id not in self.state['completed_slides']:
+            self.state['completed_slides'].append(slide_id)
         self.state['total_patches'] += num_patches
         self.save_state()
     
-    def mark_slide_failed(self, slide_id, error):
-        """Mark a slide as failed"""
-        self.state['failed_slides'][slide_id] = str(error)
+    def mark_slide_failed(self, slide_id, error_msg):
+        """Mark slide as failed"""
+        self.state['failed_slides'][slide_id] = error_msg
         self.save_state()
     
-    def save_partial_features(self, slide_id, features_df):
-        """Save features for a single slide"""
-        filepath = self.data_dir / f"{slide_id}.parquet"
-        features_df.to_parquet(filepath, index=False)
+    def save_slide_features(self, slide_id, df):
+        """Save features for one slide"""
+        filepath = self.features_dir / f"{slide_id}.csv"
+        df.to_csv(filepath, index=False)
     
-    def load_all_partial_features(self):
-        """Load all previously saved partial features"""
-        all_files = list(self.data_dir.glob("*.parquet"))
-        if not all_files:
+    def load_all_features(self):
+        """Load all saved features"""
+        files = list(self.features_dir.glob("*.csv"))
+        if not files:
             return pd.DataFrame()
         
         dfs = []
-        for file in tqdm(all_files, desc="Loading checkpoint data"):
-            dfs.append(pd.read_parquet(file))
+        for f in tqdm(files, desc="Loading features"):
+            try:
+                dfs.append(pd.read_csv(f))
+            except Exception as e:
+                print(f"  [WARN] Error loading {f.name}: {e}")
         
-        return pd.concat(dfs, ignore_index=True)
-    
-    def is_slide_processed(self, slide_id):
-        """Check if slide was already processed"""
-        return slide_id in self.state['processed_slides']
+        return pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
 
 # =============================================
 # SLIDE LOADING & VALIDATION
@@ -124,16 +134,16 @@ def load_valid_patients(valid_patients_file):
     """Load list of valid patient IDs"""
     with open(valid_patients_file, 'r') as f:
         valid_patients = set(line.strip() for line in f if line.strip())
-    print(f"✓ Loaded {len(valid_patients)} valid patient IDs")
+    print(f"[OK] Loaded {len(valid_patients)} valid patient IDs")
     return valid_patients
 
 def get_valid_slides(svs_dir, valid_patients):
     """Get SVS files that match valid patients"""
-    all_svs = glob.glob(os.path.join(svs_dir, "*.svs"))
+    all_svs = sorted(glob.glob(os.path.join(svs_dir, "*.svs")))
     valid_slides = []
     skipped = []
     
-    for svs_path in sorted(all_svs):  # Sort for consistent ordering
+    for svs_path in all_svs:
         slide_id = os.path.basename(svs_path).replace('.svs', '')
         patient_id = slide_id[:12]
         
@@ -142,204 +152,252 @@ def get_valid_slides(svs_dir, valid_patients):
         else:
             skipped.append(slide_id)
     
-    print(f"✓ Found {len(valid_slides)} valid slides out of {len(all_svs)} total")
+    print(f"[OK] Found {len(valid_slides)} valid slides out of {len(all_svs)} total")
+    print(f"  Skipped {len(skipped)} slides (patients without complete omics data)")
     return valid_slides, skipped
 
 # =============================================
-# MEMORY-EFFICIENT TISSUE DETECTION
+# TISSUE DETECTION
 # =============================================
-def detect_tissue_mask(slide, detection_level=5):
-    """Create tissue mask at low resolution"""
-    level = min(detection_level, slide.level_count - 1)
+def detect_tissue_mask(slide, level=None):
+    """Create tissue mask at appropriate level"""
+    if level is None:
+        level = min(slide.level_count - 4, slide.level_count - 1)
+    
+    level = max(0, min(level, slide.level_count - 1))
     
     dims = slide.level_dimensions[level]
-    # Read only at small size
     img = slide.read_region((0, 0), level, dims)
+    img_rgb = np.array(img.convert('RGB'))
     
-    # Resize to even smaller for speed
-    small_size = (min(dims[0], 1000), min(dims[1], 1000))
-    img_small = img.resize(small_size, Image.Resampling.LANCZOS)
-    img_rgb = np.array(img_small.convert('RGB'))
-    
-    # Use HSV for better tissue detection
     hsv = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2HSV)
     saturation = hsv[:, :, 1]
     
-    # Threshold
     _, mask = cv2.threshold(saturation, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     
-    # Quick morphological cleanup
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (25, 25))
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     
-    # Calculate scale factors
     full_w, full_h = slide.dimensions
-    scale_x = full_w / mask.shape[1]
-    scale_y = full_h / mask.shape[0]
+    mask_h, mask_w = mask.shape
+    scale_x = full_w / mask_w
+    scale_y = full_h / mask_h
     
     return mask, scale_x, scale_y
 
 # =============================================
-# MEMORY-EFFICIENT PATCH EXTRACTION
+# PATCH EXTRACTION (MEMORY-EFFICIENT GENERATOR)
 # =============================================
-def extract_patches_generator(slide, patch_size=256, n_patches=500, 
-                             extraction_level=2, tissue_threshold=0.3):
+def extract_patches_generator(slide, patch_size=256, n_patches=500, tissue_threshold=0.3):
     """
-    Extract patches with YIELD to save memory.
-    Uses lower resolution level for patches.
+    Generator that yields patches one at a time to save memory.
+    Same logic as original extract_patches_smart but yields instead of storing.
     """
-    # Get tissue mask at low resolution
     mask, scale_x, scale_y = detect_tissue_mask(slide)
     
-    # Find tissue contours
+    full_w, full_h = slide.dimensions
+    
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
     if not contours:
         return
     
-    # Calculate total tissue area
-    total_area = sum(cv2.contourArea(c) for c in contours)
-    if total_area == 0:
+    total_tissue_area = sum(cv2.contourArea(c) for c in contours)
+    if total_tissue_area == 0:
         return
     
     # Distribute patches proportionally
-    patches_yielded = 0
-    
+    tissues_regions = []
     for contour in contours:
         area = cv2.contourArea(contour)
-        n_region = max(1, int(n_patches * area / total_area))
-        
-        # Get bounding box
+        n_region = max(1, int(n_patches * area / total_tissue_area))
+        tissues_regions.append((contour, area, n_region))
+    
+    patches_yielded = 0
+    
+    for contour, area, n_region in tissues_regions:
+        if patches_yielded >= n_patches:
+            break
+            
         x, y, w, h = cv2.boundingRect(contour)
         
-        # Convert to extraction level coordinates
-        downsample = slide.level_downsamples[extraction_level]
-        x_full = int(x * scale_x / downsample)
-        y_full = int(y * scale_y / downsample)
-        w_full = int(w * scale_x / downsample)
-        h_full = int(h * scale_y / downsample)
+        x_full = int(x * scale_x)
+        y_full = int(y * scale_y)
+        w_full = int(w * scale_x)
+        h_full = int(h * scale_y)
         
-        # Get dimensions at extraction level
-        ext_dims = slide.level_dimensions[extraction_level]
+        # Generate candidate positions
+        step = patch_size // 2
+        candidates_x = list(range(max(0, x_full), min(full_w - patch_size, x_full + w_full), step))
+        candidates_y = list(range(max(0, y_full), min(full_h - patch_size, y_full + h_full), step))
         
-        # Generate random positions within region
-        np.random.seed(int(time.time() * 1000) % 10000)  # Different seed per run
+        if not candidates_x or not candidates_y:
+            continue
         
-        attempts = 0
-        max_attempts = n_region * 3
+        n_candidates = len(candidates_x) * len(candidates_y)
+        n_sample = min(n_region, n_candidates)
         
-        while patches_yielded < n_patches and attempts < max_attempts:
-            px = np.random.randint(x_full, min(x_full + w_full - patch_size, ext_dims[0] - patch_size)) if x_full + w_full > patch_size else x_full
-            py = np.random.randint(y_full, min(y_full + h_full - patch_size, ext_dims[1] - patch_size)) if y_full + h_full > patch_size else y_full
+        if n_candidates == 0 or n_sample == 0:
+            continue
+        
+        # Random sampling
+        np.random.seed(None)
+        indices = np.random.choice(n_candidates, size=min(n_sample, n_candidates), replace=False)
+        
+        for idx in indices:
+            if patches_yielded >= n_patches:
+                break
+                
+            ix = idx % len(candidates_x)
+            iy = idx // len(candidates_x)
             
-            if px < 0 or py < 0 or px + patch_size >= ext_dims[0] or py + patch_size >= ext_dims[1]:
-                attempts += 1
+            px = candidates_x[ix]
+            py = candidates_y[iy]
+            
+            if px < 0 or py < 0 or px + patch_size > full_w or py + patch_size > full_h:
                 continue
             
             try:
-                # Read at extraction level (not full res!)
-                patch = slide.read_region(
-                    (int(px * downsample), int(py * downsample)), 
-                    0, 
-                    (patch_size, patch_size)
-                )
+                patch = slide.read_region((px, py), 0, (patch_size, patch_size))
                 patch_rgb = np.array(patch.convert('RGB'))
                 
                 # Quick tissue check
-                if np.mean(patch_rgb) < 240 and np.std(patch_rgb) > 15:  # Not white background
+                if np.mean(patch_rgb) < 240 and np.std(patch_rgb) > 10:
                     patches_yielded += 1
                     yield patch_rgb, (px, py)
-                
             except:
-                pass
+                continue
+    
+    # If we didn't get enough patches, try random positions
+    if patches_yielded < n_patches:
+        attempts = 0
+        while patches_yielded < n_patches and attempts < (n_patches - patches_yielded) * 5:
+            px = np.random.randint(0, max(1, full_w - patch_size))
+            py = np.random.randint(0, max(1, full_h - patch_size))
+            
+            # Check tissue mask
+            mx = int(px / scale_x)
+            my = int(py / scale_y)
+            mw = int(patch_size / scale_x)
+            mh = int(patch_size / scale_y)
+            
+            if (my + mh < mask.shape[0] and mx + mw < mask.shape[1]):
+                mask_region = mask[my:my+mh, mx:mx+mw]
+                tissue_percent = np.mean(mask_region) / 255.0
+                
+                if tissue_percent >= tissue_threshold:
+                    try:
+                        patch = slide.read_region((px, py), 0, (patch_size, patch_size))
+                        patch_rgb = np.array(patch.convert('RGB'))
+                        patches_yielded += 1
+                        yield patch_rgb, (px, py)
+                    except:
+                        pass
             
             attempts += 1
 
 # =============================================
-# TRADITIONAL FEATURE EXTRACTION (OPTIMIZED)
+# TRADITIONAL FEATURE EXTRACTION
 # =============================================
 def extract_traditional_features(patch):
-    """Fast traditional feature extraction"""
+    """Extract comprehensive traditional computer vision features"""
     try:
-        # Convert to proper types
-        gray_uint = cv2.cvtColor(patch, cv2.COLOR_RGB2GRAY)
-        gray_float = gray_uint.astype(np.float32) / 255.0
+        gray = rgb2gray(patch)
+        gray_uint = (gray * 255).astype(np.uint8)
         
         features = []
         
-        # 1. Intensity statistics (6 features)
-        features.extend([np.mean(gray_float), np.std(gray_float), 
-                        np.median(gray_float), np.percentile(gray_float, 25),
-                        np.percentile(gray_float, 75), np.percentile(gray_float, 90)])
+        # 1. Color features (15 features)
+        for channel in range(3):
+            ch = patch[:, :, channel]
+            features.extend([
+                np.mean(ch), np.std(ch), np.percentile(ch, 25),
+                np.percentile(ch, 75), np.percentile(ch, 90)
+            ])
         
-        # 2. RGB channel statistics (5 features per channel = 15 features)
-        for i in range(3):
-            ch = patch[:, :, i].astype(np.float32)
-            features.extend([np.mean(ch), np.std(ch), np.median(ch)])
-        
-        # 3. Edge features (2 features)
-        edges = cv2.Canny(gray_uint, 50, 150)
-        features.extend([np.mean(edges) / 255.0, np.sum(edges > 0) / edges.size])
-        
-        # 4. Blob-like features (Laplacian) (2 features)
-        laplacian = cv2.Laplacian(gray_uint, cv2.CV_64F)
-        features.extend([np.mean(np.abs(laplacian)), np.std(laplacian)])
-        
-        # 5. Gradient features (Sobel) (4 features)
-        sobelx = cv2.Sobel(gray_uint, cv2.CV_64F, 1, 0, ksize=3)
-        sobely = cv2.Sobel(gray_uint, cv2.CV_64F, 0, 1, ksize=3)
-        features.extend([np.mean(np.abs(sobelx)), np.std(sobelx),
-                        np.mean(np.abs(sobely)), np.std(sobely)])
-        
-        # 6. Local binary pattern (10 features)
-        lbp = local_binary_pattern(gray_float, P=8, R=1, method='uniform')
+        # 2. Texture - LBP (10 features)
+        lbp = local_binary_pattern(gray, P=8, R=1, method='uniform')
         lbp_hist, _ = np.histogram(lbp, bins=10, range=(0, 10), density=True)
         features.extend(lbp_hist)
         
+        # 3. Texture - GLCM (10 features)
+        distances = [1, 3]
+        angles = [0, np.pi/4, np.pi/2, 3*np.pi/4]
+        
+        for d in distances:
+            glcm = graycomatrix(gray_uint, distances=[d], angles=angles, levels=256, symmetric=True, normed=True)
+            features.extend([
+                graycoprops(glcm, 'contrast').mean(),
+                graycoprops(glcm, 'dissimilarity').mean(),
+                graycoprops(glcm, 'homogeneity').mean(),
+                graycoprops(glcm, 'energy').mean(),
+                graycoprops(glcm, 'correlation').mean()
+            ])
+        
+        # 4. Edge features (1 feature)
+        edges = cv2.Canny(gray_uint, 50, 150)
+        features.append(np.mean(edges) / 255)
+        
+        # 5. Nuclei-like features (4 features)
+        hematoxylin = 1.0 * patch[:, :, 2] - 0.5 * patch[:, :, 0] - 0.5 * patch[:, :, 1]
+        features.extend([np.mean(hematoxylin), np.std(hematoxylin)])
+        
+        eosin = 1.0 * patch[:, :, 0] + 0.5 * patch[:, :, 1] - 1.0 * patch[:, :, 2]
+        features.extend([np.mean(eosin), np.std(eosin)])
+        
         return np.array(features, dtype=np.float32)
     
-    except Exception as e:
-        return np.zeros(39, dtype=np.float32)
+    except Exception:
+        return np.zeros(40, dtype=np.float32)
 
 # =============================================
-# DEEP LEARNING FEATURE EXTRACTOR (MEMORY EFFICIENT)
+# DEEP LEARNING FEATURE EXTRACTOR
 # =============================================
-class LightweightDLExtractor:
-    """Memory-efficient DL extractor"""
+class DLFeatureExtractor:
+    """Efficient batch-based deep learning feature extractor"""
     
-    def __init__(self, device='cpu'):
+    def __init__(self, model_name='resnet18', device='cpu', image_size=224):
         self.device = device
+        self.image_size = image_size
         
-        # Use ResNet18 instead of ResNet50 for CPU (faster, less memory)
-        model = models.resnet18(weights='IMAGENET1K_V1')
+        # Load model based on config
+        weights_map = {
+            'resnet18': ('IMAGENET1K_V1', 512),
+            'resnet50': ('IMAGENET1K_V2', 2048),
+        }
+        
+        weights, self.feature_dim = weights_map.get(model_name, weights_map['resnet18'])
+        
+        if model_name == 'resnet18':
+            model = models.resnet18(weights=weights)
+        else:
+            model = models.resnet50(weights=weights)
+        
         self.model = torch.nn.Sequential(*list(model.children())[:-1])
-        self.feature_dim = 512
         self.model = self.model.to(device)
         self.model.eval()
         
         self.preprocess = transforms.Compose([
-            transforms.Resize(224),
-            transforms.CenterCrop(224),
+            transforms.Resize(int(image_size * 1.14)),
+            transforms.CenterCrop(image_size),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
         
-        print(f"✓ Lightweight DL Extractor: ResNet18 on {device} (dim={self.feature_dim})")
+        print(f"[OK] DL Extractor: {model_name} on {device} (dim={self.feature_dim})")
     
     def extract_batch(self, patches):
-        """Extract features from batch"""
-        if not patches:
-            return np.array([])
-        
+        """Extract features from a batch of patches"""
         batch_tensors = []
+        
         for patch in patches:
             try:
                 patch_pil = Image.fromarray(patch.astype(np.uint8))
                 tensor = self.preprocess(patch_pil)
                 batch_tensors.append(tensor)
             except:
-                # Create blank tensor if patch is bad
-                batch_tensors.append(torch.zeros(3, 224, 224))
+                batch_tensors.append(torch.zeros(3, self.image_size, self.image_size))
         
         if not batch_tensors:
             return np.array([])
@@ -349,197 +407,270 @@ class LightweightDLExtractor:
         with torch.no_grad():
             features = self.model(batch)
             features = features.squeeze(-1).squeeze(-1)
-            return features.cpu().numpy()
+            result = features.cpu().numpy()
+        
+        del batch, batch_tensors, features
+        if self.device != 'cpu':
+            torch.cuda.empty_cache()
+        return result
 
 # =============================================
-# MAIN PROCESSING PIPELINE (WITH CHECKPOINTS)
+# SLIDE PROCESSOR (MEMORY-EFFICIENT)
 # =============================================
-def process_slide_memory_efficient(slide_path, slide_id, patch_size, n_patches, 
-                                  extraction_level, checkpoint_mgr, feature_type='traditional',
-                                  dl_extractor=None):
-    """Process a single slide with memory efficiency"""
+def _flush_batch_to_csv(slide_id, features, coords_buffer, batch_num, filepath):
+    """Write one batch of features directly to CSV (append mode). Returns row count."""
+    rows = []
+    for i, feat in enumerate(features):
+        feature_dict = {
+            'patient_id': slide_id[:12],
+            'slide_id': slide_id,
+            'tile_x': coords_buffer[i][0],
+            'tile_y': coords_buffer[i][1],
+            'tile_idx': batch_num * Config.MAX_PATCHES_MEMORY + i
+        }
+        for j, f in enumerate(feat):
+            feature_dict[f'feat_{j:04d}'] = float(f)
+        rows.append(feature_dict)
     
-    # Process in CHUNKS to avoid memory overload
+    df = pd.DataFrame(rows)
+    write_header = not os.path.exists(filepath)
+    df.to_csv(filepath, mode='a', header=write_header, index=False)
+    n = len(df)
+    del df, rows
+    return n
+
+
+def process_single_slide(svs_path, slide_id, feature_type, dl_extractor, n_patches, checkpoint_mgr):
+    """Process one slide — streams each batch directly to disk to minimise RAM usage."""
+    
     patches_buffer = []
     coords_buffer = []
-    all_features = []
     
     slide = None
+    # Temporary per-slide CSV; moved into checkpoint dir on success
+    tmp_path = checkpoint_mgr.features_dir / f"{slide_id}_tmp.csv"
+    if tmp_path.exists():
+        tmp_path.unlink()
     
     try:
-        slide = openslide.OpenSlide(slide_path)
-        print(f"\n[{slide_id}] Opened successfully (dims={slide.dimensions})")
+        slide = openslide.OpenSlide(svs_path)
         
         patch_gen = extract_patches_generator(
-            slide, 
-            patch_size=patch_size,
+            slide,
+            patch_size=Config.PATCH_SIZE,
             n_patches=n_patches,
-            extraction_level=extraction_level,
             tissue_threshold=Config.TISSUE_THRESHOLD
         )
         
-        chunk_count = 0
+        batch_num = 0
+        patch_count = 0
+        total_saved = 0
+        
         for patch, coord in patch_gen:
             patches_buffer.append(patch)
             coords_buffer.append(coord)
+            patch_count += 1
             
-            # Process when buffer is full or we've got enough
-            if len(patches_buffer) >= Config.MAX_PATCHES_IN_MEMORY:
-                # Extract features for this chunk
+            if len(patches_buffer) >= Config.MAX_PATCHES_MEMORY:
                 if feature_type == 'traditional':
-                    chunk_features = [extract_traditional_features(p) for p in patches_buffer]
+                    features = [extract_traditional_features(p) for p in patches_buffer]
                 else:
-                    chunk_features = dl_extractor.extract_batch(patches_buffer)
+                    features = dl_extractor.extract_batch(patches_buffer)
                 
-                # Create mini dataframe
-                for i, features in enumerate(chunk_features):
-                    feature_dict = {
-                        'patient_id': slide_id[:12],
-                        'slide_id': slide_id,
-                        'tile_x': coords_buffer[i][0],
-                        'tile_y': coords_buffer[i][1],
-                        'chunk': chunk_count
-                    }
-                    for j, feat in enumerate(features):
-                        feature_dict[f'feat_{j:04d}'] = feat
-                    all_features.append(feature_dict)
+                total_saved += _flush_batch_to_csv(
+                    slide_id, features, coords_buffer, batch_num, tmp_path
+                )
+                batch_num += 1
                 
-                chunk_count += 1
-                print(f"  Chunk {chunk_count}: Processed {len(patches_buffer)} patches", end='\r')
-                
-                # Clear buffers
-                patches_buffer.clear()
-                coords_buffer.clear()
+                # Release everything immediately
+                del features, patches_buffer, coords_buffer
+                patches_buffer = []
+                coords_buffer = []
                 gc.collect()
+                
+                print(f"  [{slide_id}] Batch {batch_num}: {patch_count} patches processed", end='\r')
         
-        # Process remaining patches
+        # Flush remaining patches
         if patches_buffer:
             if feature_type == 'traditional':
-                chunk_features = [extract_traditional_features(p) for p in patches_buffer]
+                features = [extract_traditional_features(p) for p in patches_buffer]
             else:
-                chunk_features = dl_extractor.extract_batch(patches_buffer)
+                features = dl_extractor.extract_batch(patches_buffer)
             
-            for i, features in enumerate(chunk_features):
-                feature_dict = {
-                    'patient_id': slide_id[:12],
-                    'slide_id': slide_id,
-                    'tile_x': coords_buffer[i][0],
-                    'tile_y': coords_buffer[i][1],
-                    'chunk': chunk_count
-                }
-                for j, feat in enumerate(features):
-                    feature_dict[f'feat_{j:04d}'] = feat
-                all_features.append(feature_dict)
-        
-        # Create final DataFrame for this slide
-        if all_features:
-            slide_df = pd.DataFrame(all_features)
-            print(f"\n[{slide_id}] ✓ Extracted {len(slide_df)} total feature vectors")
-            
-            # Save to checkpoint
-            checkpoint_mgr.save_partial_features(slide_id, slide_df)
-            checkpoint_mgr.mark_slide_complete(slide_id, len(slide_df))
-            
-            del slide_df, all_features
+            total_saved += _flush_batch_to_csv(
+                slide_id, features, coords_buffer, batch_num, tmp_path
+            )
+            del features, patches_buffer, coords_buffer
             gc.collect()
-            
-            return True, len(all_features)
-        else:
-            print(f"\n[{slide_id}] ⚠ No features extracted")
-            return False, 0
+        
+        if total_saved > 0:
+            # Rename tmp file to final checkpoint name
+            final_path = checkpoint_mgr.features_dir / f"{slide_id}.csv"
+            tmp_path.rename(final_path)
+            checkpoint_mgr.mark_slide_done(slide_id, total_saved)
+            return total_saved
+        
+        # Clean up empty tmp file
+        if tmp_path.exists():
+            tmp_path.unlink()
+        return 0
     
     except Exception as e:
-        print(f"\n[{slide_id}] ✗ Error: {str(e)}")
-        checkpoint_mgr.mark_slide_failed(slide_id, str(e))
-        return False, 0
+        if tmp_path.exists():
+            tmp_path.unlink()
+        checkpoint_mgr.mark_slide_failed(slide_id, f"{str(e)}\n{traceback.format_exc()}")
+        raise
     
     finally:
         if slide:
             slide.close()
+        gc.collect()
 
-def run_processing_pipeline(feature_type='traditional'):
+
+# =============================================
+# SUBPROCESS WORKER ENTRY POINT
+# =============================================
+def _subprocess_worker(svs_path, slide_id, feature_type, n_patches, checkpoint_dir):
+    """Entry point when called as subprocess for a single slide."""
+    checkpoint_mgr = CheckpointManager(checkpoint_dir, feature_type)
+    dl_extractor = None
+    if feature_type == 'dl':
+        dl_extractor = DLFeatureExtractor(
+            model_name=Config.DL_MODEL,
+            device=Config.DEVICE,
+            image_size=Config.DL_IMAGE_SIZE
+        )
+    n = process_single_slide(svs_path, slide_id, feature_type, dl_extractor, n_patches, checkpoint_mgr)
+    print(f"PATCHES:{n}")
+
+
+def _run_slide_subprocess(svs_path, slide_id, feature_type, n_patches, checkpoint_mgr):
+    """
+    Spawn an isolated subprocess per slide so the OS fully reclaims its
+    memory (OpenSlide cache, torch tensors, numpy buffers) after each slide.
+    """
+    cmd = [
+        sys.executable, __file__,
+        '--worker',
+        '--svs', svs_path,
+        '--slide-id', slide_id,
+        '--feature-type', feature_type,
+        '--n-patches', str(n_patches),
+        '--checkpoint-dir', str(checkpoint_mgr.checkpoint_dir.parent),
+    ]
+    # Force UTF-8 in subprocess so Unicode checkmarks don't crash on Windows (cp1252)
+    env = os.environ.copy()
+    env['PYTHONIOENCODING'] = 'utf-8'
+    env['PYTHONUTF8'] = '1'
+    result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', env=env)
+
+    if result.returncode != 0:
+        err = result.stderr.strip().splitlines()
+        raise RuntimeError(err[-1] if err else "subprocess failed with no stderr")
+
+    for line in result.stdout.splitlines():
+        if line.startswith("PATCHES:"):
+            return int(line.split(":")[1])
+    return 0
+
+
+# =============================================
+# MAIN PROCESSING PIPELINE
+# =============================================
+def run_pipeline(feature_type='traditional', smoke_test=False):
     """Main processing pipeline with checkpoint support"""
     
-    print(f"\n{'#'*60}")
+    print(f"\n{'='*60}")
     print(f"PROCESSING: {feature_type.upper()} FEATURES")
-    print(f"{'#'*60}")
+    print(f"{'='*60}")
     
-    # Setup checkpoint manager
+    if smoke_test:
+        print(f"*** SMOKE TEST MODE ***")
+    
+    # Setup checkpoint
     checkpoint_mgr = CheckpointManager(Config.CHECKPOINT_DIR, feature_type)
     
-    # Load valid patients
+    # Load patients
     valid_patients = load_valid_patients(Config.VALID_PATIENTS_FILE)
     valid_slides, _ = get_valid_slides(Config.SVS_DIR, valid_patients)
     
-    # Initialize DL extractor if needed
-    dl_extractor = None
-    if feature_type == 'dl':
-        dl_extractor = LightweightDLExtractor(device=Config.DEVICE)
+    # Smoke test: only use first few slides
+    if smoke_test:
+        valid_slides = valid_slides[:Config.SMOKE_SLIDES]
+        n_patches_per_slide = Config.SMOKE_PATCHES
+    else:
+        n_patches_per_slide = Config.PATCHES_PER_SLIDE
     
-    # Filter out already processed slides
+    # Filter already processed slides
     remaining_slides = []
-    for slide_path in valid_slides:
-        slide_id = os.path.basename(slide_path).replace('.svs', '')
-        if not checkpoint_mgr.is_slide_processed(slide_id):
-            remaining_slides.append(slide_path)
+    for sp in valid_slides:
+        sid = os.path.basename(sp).replace('.svs', '')
+        if not checkpoint_mgr.is_slide_done(sid):
+            remaining_slides.append(sp)
     
-    print(f"✓ Already processed: {len(valid_slides) - len(remaining_slides)} slides")
-    print(f"✓ Remaining to process: {len(remaining_slides)} slides")
+    print(f"[OK] Already completed: {len(valid_slides) - len(remaining_slides)} slides")
+    print(f"[OK] Remaining to process: {len(remaining_slides)} slides")
+    print(f"[OK] Patches per slide: {n_patches_per_slide}")
     
     if not remaining_slides:
-        print("✓ All slides already processed!")
-        return checkpoint_mgr.load_all_partial_features()
+        print("[OK] All slides already processed!")
+        return checkpoint_mgr.load_all_features()
     
-    # Process remaining slides
+    # Process slides (each slide runs in its own subprocess - dl_extractor init is handled per-subprocess)
     start_time = time.time()
     success_count = 0
     fail_count = 0
     
-    for idx, slide_path in enumerate(tqdm(remaining_slides, desc=f"Processing ({feature_type})")):
-        slide_id = os.path.basename(slide_path).replace('.svs', '')
+    for idx, svs_path in enumerate(tqdm(remaining_slides, desc=f"Processing slides ({feature_type})")):
+        slide_id = os.path.basename(svs_path).replace('.svs', '')
         
-        success, num_features = process_slide_memory_efficient(
-            slide_path, slide_id,
-            patch_size=Config.PATCH_SIZE,
-            n_patches=Config.PATCHES_PER_SLIDE,
-            extraction_level=Config.EXTRACTION_LEVEL,
-            checkpoint_mgr=checkpoint_mgr,
-            feature_type=feature_type,
-            dl_extractor=dl_extractor
-        )
+        try:
+            n_features = _run_slide_subprocess(
+                svs_path, slide_id, feature_type,
+                n_patches_per_slide, checkpoint_mgr
+            )
+            
+            if n_features > 0:
+                success_count += 1
+                print(f"\n  [OK] [{slide_id}] Done: {n_features} patches")
+            else:
+                fail_count += 1
+                print(f"\n  [WARN] [{slide_id}] No tissue found")
         
-        if success:
-            success_count += 1
-        else:
+        except Exception as e:
             fail_count += 1
+            print(f"\n  [FAIL] [{slide_id}] Failed: {str(e)[:100]}")
         
-        # Force garbage collection
-        gc.collect()
-        
-        # Print progress
+        # Progress update
         elapsed = time.time() - start_time
-        print(f"\nProgress: {success_count} success, {fail_count} failed | "
-              f"Time elapsed: {elapsed/60:.1f} min | "
-              f"Avg per slide: {elapsed/(idx+1):.1f}s")
+        rate = elapsed / (idx + 1)
+        remaining = rate * (len(remaining_slides) - idx - 1)
+        print(f"Progress: {success_count} ok, {fail_count} fail | "
+              f"Elapsed: {elapsed/60:.1f}m | ETA: {remaining/60:.1f}m | "
+              f"Rate: {rate:.1f}s/slide")
     
-    # Load all features
-    print(f"\n✓ Processing complete! Loading all features...")
-    final_df = checkpoint_mgr.load_all_partial_features()
+    # Load and save final output
+    print("\n[OK] Loading all features...")
+    final_df = checkpoint_mgr.load_all_features()
     
-    # Save final output
-    output_path = Config.OUTPUT_TRADITIONAL if feature_type == 'traditional' else Config.OUTPUT_DL
-    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    final_df.to_csv(output_path, index=False)
+    output_file = Config.OUTPUT_TRADITIONAL if feature_type == 'traditional' else Config.OUTPUT_DL
     
-    print(f"\n{'='*60}")
-    print(f"FINAL SUMMARY - {feature_type.upper()}")
-    print(f"{'='*60}")
-    print(f"✓ Slides processed: {success_count}/{len(remaining_slides)}")
-    print(f"✓ Slides failed: {fail_count}")
-    print(f"✓ Total feature vectors: {len(final_df)}")
-    print(f"✓ Feature dimension: {len([c for c in final_df.columns if 'feat_' in c])}")
-    print(f"✓ Output: {output_path}")
-    print(f"✓ Total time: {(time.time() - start_time)/60:.1f} minutes")
+    if len(final_df) > 0:
+        final_df.to_csv(output_file, index=False)
+        
+        feature_cols = [c for c in final_df.columns if c.startswith('feat_')]
+        
+        print(f"\n{'='*60}")
+        print(f"{feature_type.upper()} FEATURES EXTRACTION COMPLETE")
+        print(f"{'='*60}")
+        print(f"[OK] Successful slides: {success_count}/{len(remaining_slides)}")
+        print(f"[OK] Total patches: {len(final_df)}")
+        print(f"[OK] Feature dimension: {len(feature_cols)}")
+        print(f"[OK] Output: {output_file}")
+        print(f"[OK] Total time: {(time.time() - start_time)/60:.1f} minutes")
+        print(f"[OK] Checkpoints: {Config.CHECKPOINT_DIR}/{feature_type}/")
+    else:
+        print("\n[FAIL] No features extracted!")
     
     return final_df
 
@@ -547,25 +678,80 @@ def run_processing_pipeline(feature_type='traditional'):
 # MAIN EXECUTION
 # =============================================
 if __name__ == "__main__":
-    print("TCGA Integrative Analysis - Memory-Efficient Feature Extraction")
+    import argparse
+    _parser = argparse.ArgumentParser(add_help=False)
+    _parser.add_argument('--worker', action='store_true')
+    _parser.add_argument('--svs', default=None)
+    _parser.add_argument('--slide-id', default=None)
+    _parser.add_argument('--feature-type', default=None)
+    _parser.add_argument('--n-patches', type=int, default=None)
+    _parser.add_argument('--checkpoint-dir', default=None)
+    _args, _ = _parser.parse_known_args()
+
+    if _args.worker:
+        # Running as a subprocess worker for a single slide
+        _subprocess_worker(
+            svs_path=_args.svs,
+            slide_id=_args.slide_id,
+            feature_type=_args.feature_type,
+            n_patches=_args.n_patches,
+            checkpoint_dir=_args.checkpoint_dir,
+        )
+        sys.exit(0)
+
+    print("TCGA Integrative Analysis - Image Feature Extraction")
     print("="*60)
-    print(f"Patch size: {Config.PATCH_SIZE}x{Config.PATCH_SIZE}")
-    print(f"Patches per slide: {Config.PATCHES_PER_SLIDE}")
-    print(f"Max patches in memory: {Config.MAX_PATCHES_IN_MEMORY}")
-    print(f"Extraction level: {Config.EXTRACTION_LEVEL}")
     
-    # Create output directories
+    # Configuration
+    print(f"\nConfiguration:")
+    print(f"  Patch size: {Config.PATCH_SIZE}x{Config.PATCH_SIZE}")
+    print(f"  Patches per slide: {Config.PATCHES_PER_SLIDE}")
+    print(f"  Batch size (memory): {Config.MAX_PATCHES_MEMORY}")
+    print(f"  Device: {Config.DEVICE}")
+    print(f"  DL Model: {Config.DL_MODEL}")
+    print(f"  Smoke Test: {Config.SMOKE_TEST}")
+    
+    # Create directories
     Path(Config.CHECKPOINT_DIR).mkdir(parents=True, exist_ok=True)
-    Path(Config.OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
     
-    # Phase 1: Traditional Features
-    if Config.RUN_TRADITIONAL:
-        traditional_df = run_processing_pipeline(feature_type='traditional')
+    if Config.SMOKE_TEST:
+        print(f"\n{'#'*60}")
+        print(f"RUNNING SMOKE TEST FIRST")
+        print(f"{'#'*60}")
+        
+        # Run smoke test for traditional features
+        print("\n>>> Smoke Test: Traditional Features")
+        try:
+            _ = run_pipeline(feature_type='traditional', smoke_test=True)
+            print("\n[OK] Traditional features smoke test PASSED")
+        except Exception as e:
+            print(f"\n[FAIL] Traditional features smoke test FAILED: {e}")
+        
+        # Run smoke test for DL features
+        print("\n>>> Smoke Test: Deep Learning Features")
+        try:
+            _ = run_pipeline(feature_type='dl', smoke_test=True)
+            print("\n[OK] DL features smoke test PASSED")
+        except Exception as e:
+            print(f"\n[FAIL] DL features smoke test FAILED: {e}")
+        
+        print(f"\n{'#'*60}")
+        print(f"SMOKE TEST COMPLETE - Starting full pipeline")
+        print(f"{'#'*60}")
     
-    # Phase 2: Deep Learning Features
-    if Config.RUN_DL:
-        dl_df = run_processing_pipeline(feature_type='dl')
+    # Full pipeline
+    Config.SMOKE_TEST = False  # Disable smoke test for full run
     
     print(f"\n{'#'*60}")
-    print(f"ALL PROCESSING COMPLETE! 🎉")
+    print(f"FULL PIPELINE")
+    print(f"{'#'*60}")
+    
+    # Phase 1: Traditional Features
+    traditional_features = run_pipeline(feature_type='traditional')
+    
+    # Phase 2: Deep Learning Features
+    dl_features = run_pipeline(feature_type='dl')
+    
+    print(f"\n{'#'*60}")
+    print(f"ALL PROCESSING COMPLETE! ")
     print(f"{'#'*60}")
