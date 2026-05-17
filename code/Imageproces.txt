@@ -1,0 +1,125 @@
+PS D:\Downloads\Repositories\TCGA-Integrative-Analysis> python code/ImageProcessing.py
+TCGA Integrative Analysis - Image Feature Extraction
+============================================================
+
+Configuration:
+  Patch size: 256x256
+  Patches per slide: 1000
+  Batch size (memory): 50
+  Device: cpu
+  DL Model: resnet50
+  Smoke Test: False
+
+############################################################
+FULL PIPELINE
+############################################################
+
+============================================================
+PROCESSING: TRADITIONAL FEATURES
+============================================================
+[OK] Loaded 82 valid patient IDs
+[OK] Found 82 valid slides out of 172 total
+  Skipped 90 slides (patients without complete omics data)
+[OK] Already completed: 82 slides
+[OK] Remaining to process: 0 slides
+[OK] Patches per slide: 1000
+[OK] All slides already processed!
+Loading features: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 81/81 [00:06<00:00, 11.91it/s]
+
+============================================================
+PROCESSING: DL FEATURES
+============================================================
+[OK] Loaded 82 valid patient IDs
+[OK] Found 82 valid slides out of 172 total
+  Skipped 90 slides (patients without complete omics data)
+[OK] Already completed: 59 slides
+[OK] Remaining to process: 23 slides
+[OK] Patches per slide: 1000
+Processing slides (dl):   0%|                                                                                                                                                                             | 0/23 [00:00<?, ?it/s]
+  [OK] [TCGA-CV-7100] Done: 1000 patches
+Progress: 1 ok, 0 fail | Elapsed: 65.0m | ETA: 1430.6m | Rate: 3901.7s/slide
+Processing slides (dl):   4%|██████▊                                                                                                                                                       | 1/23 [1:05:01<23:50:39, 3901.81s/it]
+  [OK] [TCGA-CV-7102] Done: 949 patches
+Progress: 2 ok, 0 fail | Elapsed: 70.7m | ETA: 741.9m | Rate: 2119.8s/slide
+Processing slides (dl):   9%|█████████████▋                                                                                                                                                | 2/23 [1:10:39<10:31:53, 1805.39s/it]
+  [OK] [TCGA-CV-7103] Done: 908 patches
+Progress: 3 ok, 0 fail | Elapsed: 81.8m | ETA: 545.3m | Rate: 1636.0s/slide
+Processing slides (dl):  13%|████████████████████▋                                                                                                                                          | 3/23 [1:21:48<7:08:43, 1286.18s/it]
+  [OK] [TCGA-CV-7183] Done: 1000 patches
+Progress: 4 ok, 0 fail | Elapsed: 92.6m | ETA: 439.7m | Rate: 1388.4s/slide
+Processing slides (dl):  17%|███████████████████████████▋                                                                                                                                   | 4/23 [1:32:33<5:27:12, 1033.28s/it]
+  [OK] [TCGA-CV-7235] Done: 1000 patches
+Progress: 5 ok, 0 fail | Elapsed: 106.7m | ETA: 384.0m | Rate: 1280.1s/slide
+Processing slides (dl):  22%|██████████████████████████████████▊                                                                                                                             | 5/23 [1:46:40<4:49:49, 966.10s/it]
+  [OK] [TCGA-CV-7236] Done: 955 patches
+Progress: 6 ok, 0 fail | Elapsed: 115.9m | ETA: 328.4m | Rate: 1159.2s/slide
+Processing slides (dl):  26%|█████████████████████████████████████████▋                                                                                                                      | 6/23 [1:55:55<3:54:04, 826.14s/it]
+  [OK] [TCGA-CV-7238] Done: 973 patches
+Progress: 7 ok, 0 fail | Elapsed: 125.7m | ETA: 287.4m | Rate: 1077.8s/slide
+Processing slides (dl):  30%|████████████████████████████████████████████████▋                                                                                                               | 7/23 [2:05:44<3:19:42, 748.91s/it]
+  [OK] [TCGA-CV-7255] Done: 996 patches
+Progress: 8 ok, 0 fail | Elapsed: 137.3m | ETA: 257.4m | Rate: 1029.7s/slide
+Processing slides (dl):  35%|███████████████████████████████████████████████████████▋                                                                                                        | 8/23 [2:17:17<3:02:45, 731.01s/it]
+  [OK] [TCGA-CV-7263] Done: 1000 patches
+Progress: 9 ok, 0 fail | Elapsed: 153.3m | ETA: 238.4m | Rate: 1021.7s/slide
+Processing slides (dl):  39%|██████████████████████████████████████████████████████████████▌                                                                                                 | 9/23 [2:33:16<3:07:11, 802.22s/it]
+  [OK] [TCGA-CV-7411] Done: 1000 patches
+Progress: 10 ok, 0 fail | Elapsed: 159.3m | ETA: 207.1m | Rate: 955.7s/slide
+Processing slides (dl):  43%|█████████████████████████████████████████████████████████████████████▏                                                                                         | 10/23 [2:39:17<2:24:16, 665.88s/it]
+  [OK] [TCGA-CV-7413] Done: 971 patches
+Progress: 11 ok, 0 fail | Elapsed: 165.0m | ETA: 180.0m | Rate: 899.8s/slide
+Processing slides (dl):  48%|████████████████████████████████████████████████████████████████████████████                                                                                   | 11/23 [2:44:58<1:53:18, 566.58s/it]
+  [OK] [TCGA-CV-7416] Done: 1000 patches
+Progress: 12 ok, 0 fail | Elapsed: 177.3m | ETA: 162.5m | Rate: 886.5s/slide
+Processing slides (dl):  52%|██████████████████████████████████████████████████████████████████████████████████▉                                                                            | 12/23 [2:57:17<1:53:29, 619.08s/it]
+  [OK] [TCGA-CV-7434] Done: 922 patches
+Progress: 13 ok, 0 fail | Elapsed: 182.4m | ETA: 140.3m | Rate: 841.7s/slide
+Processing slides (dl):  57%|█████████████████████████████████████████████████████████████████████████████████████████▊                                                                     | 13/23 [3:02:22<1:27:19, 523.96s/it]
+  [OK] [TCGA-CX-7082] Done: 964 patches
+Progress: 14 ok, 0 fail | Elapsed: 186.8m | ETA: 120.1m | Rate: 800.6s/slide
+Processing slides (dl):  61%|████████████████████████████████████████████████████████████████████████████████████████████████▊                                                              | 14/23 [3:06:48<1:06:54, 446.01s/it]
+  [OK] [TCGA-CX-7086] Done: 1000 patches
+Progress: 15 ok, 0 fail | Elapsed: 191.2m | ETA: 102.0m | Rate: 764.9s/slide
+Processing slides (dl):  65%|█████████████████████████████████████████████████████████████████████████████████████████████████████████                                                        | 15/23 [3:11:14<52:12, 391.60s/it]
+  [OK] [TCGA-D6-6516] Done: 999 patches
+Progress: 16 ok, 0 fail | Elapsed: 196.5m | ETA: 86.0m | Rate: 737.0s/slide
+Processing slides (dl):  70%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                 | 16/23 [3:16:32<43:06, 369.49s/it]
+  [OK] [TCGA-D6-6823] Done: 970 patches
+Progress: 17 ok, 0 fail | Elapsed: 201.0m | ETA: 71.0m | Rate: 709.5s/slide
+Processing slides (dl):  74%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                          | 17/23 [3:21:01<33:56, 339.49s/it]
+  [OK] [TCGA-DQ-5624] Done: 1000 patches
+Progress: 18 ok, 0 fail | Elapsed: 209.7m | ETA: 58.2m | Rate: 698.9s/slide
+Processing slides (dl):  78%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                   | 18/23 [3:29:41<32:47, 393.43s/it]
+  [OK] [TCGA-DQ-5625] Done: 1000 patches
+Progress: 19 ok, 0 fail | Elapsed: 217.8m | ETA: 45.8m | Rate: 687.7s/slide
+Processing slides (dl):  83%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                            | 19/23 [3:37:46<28:04, 421.00s/it]
+  [OK] [TCGA-DQ-5631] Done: 1000 patches
+Progress: 20 ok, 0 fail | Elapsed: 222.7m | ETA: 33.4m | Rate: 668.1s/slide
+Processing slides (dl):  87%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                     | 20/23 [3:42:41<19:09, 383.19s/it]
+  [OK] [TCGA-DQ-7588] Done: 1000 patches
+Progress: 21 ok, 0 fail | Elapsed: 231.7m | ETA: 22.1m | Rate: 662.1s/slide
+Processing slides (dl):  91%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████              | 21/23 [3:51:43<14:21, 430.99s/it]
+  [OK] [TCGA-H7-7774] Done: 930 patches
+Progress: 22 ok, 0 fail | Elapsed: 236.7m | ETA: 10.8m | Rate: 645.5s/slide
+Processing slides (dl):  96%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████       | 22/23 [3:56:40<06:30, 390.86s/it]
+  [OK] [TCGA-HD-7831] Done: 937 patches
+Progress: 23 ok, 0 fail | Elapsed: 240.5m | ETA: 0.0m | Rate: 627.5s/slide
+Processing slides (dl): 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 23/23 [4:00:31<00:00, 627.47s/it]
+
+[OK] Loading all features...
+Loading features: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 82/82 [01:39<00:00,  1.22s/it]
+
+============================================================
+DL FEATURES EXTRACTION COMPLETE
+============================================================
+[OK] Successful slides: 23/23
+[OK] Total patches: 77672
+[OK] Feature dimension: 2048
+[OK] Output: image_features_deeplearning.csv
+[OK] Total time: 247.3 minutes
+[OK] Checkpoints: checkpoints//dl/
+
+############################################################
+ALL PROCESSING COMPLETE!
+############################################################
+PS D:\Downloads\Repositories\TCGA-Integrative-Analysis>
